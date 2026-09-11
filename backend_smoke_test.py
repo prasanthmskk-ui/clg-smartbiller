@@ -1,31 +1,95 @@
-"""Static backend smoke tests; no MySQL credentials or network access required."""
-from pathlib import Path
-import ast
+import requests
 
-ROOT = Path(__file__).resolve().parent
-APP = ROOT / "src" / "2_Backend" / "app.py"
-SCHEMA = ROOT / "src" / "3_Database" / "schema.sql"
+BASE_URL = "http://127.0.0.1:5000"
 
-source = APP.read_text(encoding="utf-8")
-ast.parse(source)
-schema = SCHEMA.read_text(encoding="utf-8")
 
-required_routes = ["/api/health", "/api/save-receipt", "/api/receipts"]
-required_tables = ["customers", "receipts", "receipt_items"]
-required_sql = ["FOREIGN KEY", "phone_number", "ON DELETE CASCADE"]
+def test_health():
+    print("\n[1] Testing health endpoint...")
 
-for route in required_routes:
-    assert route in source, f"Missing route: {route}"
-for table in required_tables:
-    assert f"CREATE TABLE IF NOT EXISTS {table}" in schema, f"Missing table: {table}"
-for fragment in required_sql:
-    assert fragment in schema, f"Missing schema constraint: {fragment}"
+    response = requests.get(
+        f"{BASE_URL}/api/health",
+        timeout=10
+    )
 
-assert "conn.commit()" in source
-assert "conn.rollback()" in source
-assert "Decimal" in source
-assert "Request body must be valid JSON" in source
-assert "Item {index}: quantity/price is invalid" in source
+    print("Status:", response.status_code)
+    print("Response:", response.json())
 
-print("PASS: backend syntax, routes, validation, transaction handling, and schema checks")
-print("NOTE: real MySQL connection/INSERT/SELECT still requires a reachable MySQL server and credentials.")
+    assert response.status_code == 200
+    assert response.json().get("status") == "ok"
+
+    print("✅ Health test passed")
+
+
+def test_save_receipt():
+    print("\n[2] Testing save receipt...")
+
+    payload = {
+        "customer_name": "Aiven Test Customer",
+        "phone_number": "9999999999",
+        "total_amount": 300,
+        "items": [
+            {
+                "product_name": "Aiven Test Product",
+                "quantity": 2,
+                "price": 150
+            }
+        ]
+    }
+
+    response = requests.post(
+        f"{BASE_URL}/api/save-receipt",
+        json=payload,
+        timeout=10
+    )
+
+    print("Status:", response.status_code)
+    print("Response:", response.json())
+
+    assert response.status_code == 201
+    assert response.json().get("success") is True
+
+    receipt_id = response.json().get("receipt_id")
+
+    print("✅ Receipt saved")
+    print("Receipt ID:", receipt_id)
+
+
+def test_get_receipts():
+    print("\n[3] Testing get receipts...")
+
+    response = requests.get(
+        f"{BASE_URL}/api/receipts",
+        timeout=10
+    )
+
+    print("Status:", response.status_code)
+    print("Response:", response.json())
+
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+    print("✅ Get receipts test passed")
+
+
+if __name__ == "__main__":
+
+    print("=" * 50)
+    print("SMART BILLER BACKEND SMOKE TEST")
+    print("=" * 50)
+
+    try:
+        test_health()
+        test_save_receipt()
+        test_get_receipts()
+
+        print("\n" + "=" * 50)
+        print("🎉 ALL BACKEND TESTS PASSED")
+        print("=" * 50)
+
+    except requests.exceptions.ConnectionError:
+        print("\n❌ Backend is not running.")
+        print("Start Flask backend first.")
+
+    except Exception as e:
+        print("\n❌ TEST FAILED")
+        print("Error:", e)
