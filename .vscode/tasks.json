@@ -1,0 +1,72 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Flask backend on port 5000",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-u",
+				"src/2_Backend/app.py"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify Flask API endpoints",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-c",
+				"import urllib.request; print('health:', urllib.request.urlopen('http://127.0.0.1:5000/api/health').read().decode()); response = urllib.request.urlopen('http://127.0.0.1:5000/api/receipts'); print('receipts:', response.status, response.read().decode())"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify Flask API endpoints",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-c",
+				"import urllib.request; print(\"health:\", urllib.request.urlopen(\"http://127.0.0.1:5000/api/health\").read().decode()); response = urllib.request.urlopen(\"http://127.0.0.1:5000/api/receipts\"); print(\"receipts:\", response.status, response.read().decode())"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify Flask API endpoints",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$health = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/api/health; $receipts = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/api/receipts; Write-Output ('health: ' + $health.StatusCode + ' ' + $health.Content); Write-Output ('receipts: ' + $receipts.StatusCode + ' ' + $receipts.Content)"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate frontend build",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate frontend build now",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

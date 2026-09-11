@@ -1,0 +1,29 @@
+CREATE DATABASE IF NOT EXISTS billing_db
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE billing_db;
+
+CREATE TABLE IF NOT EXISTS customers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(64) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS receipts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    total_amount DECIMAL(12,5) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_receipts_customer FOREIGN KEY (customer_id)
+      REFERENCES customers(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS receipt_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    receipt_id INT NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    price DECIMAL(12,5) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_receipt_items_receipt FOREIGN KEY (receipt_id)
+      REFERENCES receipts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
