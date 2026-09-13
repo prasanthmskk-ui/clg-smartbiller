@@ -63,42 +63,56 @@ export default function NewReceipt({ cart, setCart, savedItems }) {
 
   const findMatchingProduct = React.useCallback(
     (transcript) => {
-      const spokenText = normalizeVoiceText(transcript).toLowerCase()
+      const spokenText = normalizeVoiceText(transcript).toLowerCase().trim()
 
       if (!spokenText) return null
 
-      const norm = (s) =>
-        String(s || '')
+      const norm = (value) =>
+        String(value || '')
           .trim()
           .toLowerCase()
           .replace(/\s+/g, ' ')
 
       const cleanSpoken = norm(spokenText)
 
-      const matchesSpoken = (value) => {
-        const clean = norm(value)
+      const getProductNames = (product) =>
+        [
+          product.productName,
+          product.name,
+          product.tamilName,
+        ]
+          .map(norm)
+          .filter(Boolean)
 
-        if (!clean) return false
-
-        return (
-          clean === cleanSpoken ||
-          clean.includes(cleanSpoken) ||
-          cleanSpoken.includes(clean)
+      // 1. Always prefer the complete/exact saved product name.
+      // Example: "dairy milk" -> "dairy milk", not "milk".
+      const exactMatch = savedItems.find((product) =>
+        getProductNames(product).some(
+          (name) => name === cleanSpoken
         )
+      )
+
+      if (exactMatch) {
+        return exactMatch
       }
 
-      return (
-        savedItems.find(
-          (p) =>
-            (p.name && matchesSpoken(p.name)) ||
-            (p.tamilName && matchesSpoken(p.tamilName))
-        ) ||
-        savedItems.find((p) => {
-          const productName = String(p.productName || '').trim()
-          return productName && matchesSpoken(productName)
-        }) ||
-        null
-      )
+      // 2. For a single-word voice command, allow an unambiguous
+      // word match inside a saved multi-word product name.
+      // Example: "milk" -> "Dairy Milk" when only one product matches.
+      if (!cleanSpoken.includes(' ')) {
+        const partialMatches = savedItems.filter((product) =>
+          getProductNames(product).some((name) =>
+            name.split(' ').includes(cleanSpoken)
+          )
+        )
+
+        if (partialMatches.length === 1) {
+          return partialMatches[0]
+        }
+      }
+
+      // 3. Do not guess between products.
+      return null
     },
     [savedItems]
   )
