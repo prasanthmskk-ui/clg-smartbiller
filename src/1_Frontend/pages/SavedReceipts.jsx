@@ -134,7 +134,7 @@ export default function SavedReceipts() {
         </button>
 
         <h1 className="text-lg font-bold text-gray-900">
-          சேமித்த ரசீதுகள்
+          {t('savedReceipts')}
         </h1>
       </header>
 
@@ -150,7 +150,7 @@ export default function SavedReceipts() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="பெயர் அல்லது எண் மூலம் தேட..."
+              placeholder={t('searchPlaceholder') + '...'}
               className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-3 text-base text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
             />
           </div>
@@ -159,18 +159,17 @@ export default function SavedReceipts() {
         {loading ? (
           <div className="flex items-center justify-center h-40">
             <p className="text-slate-500">
-              Loading receipts...
+              {t('loadingReceipts')}
             </p>
           </div>
         ) : serverUnavailable ? (
           <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
             <p className="font-semibold text-amber-800">
-              Billing server unavailable
+              {t('billingServerUnavailable')}
             </p>
 
             <p className="mt-1 text-sm text-amber-700">
-              Showing locally saved receipts. Start the app with `npm run dev`
-              and retry.
+              {t('localReceiptsHint')}
             </p>
 
             <button
@@ -178,7 +177,7 @@ export default function SavedReceipts() {
               onClick={retryFetch}
               className="mt-4 rounded-xl bg-amber-600 px-5 py-3 font-semibold text-white transition hover:bg-amber-700"
             >
-              Retry connection
+              {t('retryConnection')}
             </button>
           </div>
         ) : filteredReceipts.length === 0 ? (
@@ -219,11 +218,11 @@ export default function SavedReceipts() {
                       </p>
 
                       <p className="receipt-card-meta text-sm text-slate-500">
-                        தேதி:{' '}
+                        {t('date')}:{' '}
                         {formatDate(
                           receipt.created_at || receipt.date
                         )}{' '}
-                        | மொத்தம்: ₹
+                        | {t('total')}: ₹
                         {Number(
                           receipt.total_amount ||
                             receipt.totalAmount ||
@@ -286,7 +285,7 @@ export default function SavedReceipts() {
                           }
                           className="px-5 py-2 rounded-full border border-indigo-500 bg-white text-indigo-600 font-bold text-sm hover:bg-indigo-50 transition inline-flex items-center gap-2"
                         >
-                          🖨️ மீண்டும் அச்சியிடு
+                          🖨️ {t('rePrint')}
                         </button>
                       </div>
                     </div>

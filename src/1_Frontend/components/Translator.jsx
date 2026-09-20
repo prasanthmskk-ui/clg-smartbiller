@@ -115,7 +115,7 @@ export default function Translator() {
     to,
     setter
   ) => {
-    if (!text.trim()) return;
+    if (!text || !String(text).trim()) return;
 
     const requestId =
       ++requestIdRef.current;

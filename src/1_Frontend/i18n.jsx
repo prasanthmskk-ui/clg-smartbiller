@@ -71,7 +71,18 @@ const translations = {
     voiceNotSupported: 'இந்த ப\u0b9e\u0b9fதளத்தில் குரல் தேடல் ஆதரிக்கப்படவில்லை',
     voiceRequiresHttps: 'குரல் தேடலுக்கு HTTPS அல்லது localhost தேவை',
     voiceUnavailable: 'குரல் தேடல் கிடைக்கவில்லை',
-    clearSearch: 'தேடலை அழி'
+    clearSearch: 'தேடலை அழி',
+    rePrint: 'மீண்டும் அச்சிடு',
+    micPermissionDenied: 'மைக்ரோஃபோன் அனுமதி மறுக்கப்பட்டது',
+    micUnavailable: 'மைக்ரோஃபோன் கிடைக்கவில்லை',
+    addProductsFirst: 'முதலில் Product சேர்க்கவும்',
+    productNotRecognized: 'Product புரியவில்லை. மீண்டும் சொல்லவும்.',
+    loadingReceipts: 'Loading receipts...',
+    billingServerUnavailable: 'Billing server unavailable',
+    localReceiptsHint: 'Showing locally saved receipts. Start the app with npm run dev and retry.',
+    noSpeechDetected: 'No speech detected',
+    noMicrophoneAvailable: 'No microphone available',
+    retryConnection: 'மீண்டும் இணைப்பை நீட்டுங்கள்',
   },
   en: {
     newReceipt: 'New Receipt',
@@ -143,7 +154,18 @@ const translations = {
     voiceNotSupported: 'Voice search is not supported in this browser',
     voiceRequiresHttps: 'Voice search requires HTTPS or localhost',
     voiceUnavailable: 'Voice search unavailable',
-    clearSearch: 'Clear search'
+    clearSearch: 'Clear search',
+    rePrint: 'Re-print',
+    micPermissionDenied: 'Microphone permission denied',
+    micUnavailable: 'No microphone available',
+    addProductsFirst: 'Please add products first.',
+    productNotRecognized: 'Product not recognized. Please try again.',
+    loadingReceipts: 'Loading receipts...',
+    billingServerUnavailable: 'Billing server unavailable',
+    localReceiptsHint: 'Showing locally saved receipts. Start the app with npm run dev and retry.',
+    noSpeechDetected: 'No speech detected',
+    noMicrophoneAvailable: 'No microphone available',
+    retryConnection: 'Retry connection',
   }
 }
 

@@ -18,6 +18,7 @@ import {
   VOICE_INSECURE,
   ENGLISH_VOICE_LANGUAGE,
 } from '../lib/voiceRecognition'
+import { transliterateToTamil } from '../../lib/ocr/transliterate'
 import { apiFetch } from '../utils/api'
 import { addOrIncrementCart } from '../utils/cart'
 
@@ -769,17 +770,22 @@ export default function NewReceipt({
           return
         }
 
+        const product = {
+          ...matchedProduct,
+          tamilName:
+            matchedProduct.tamilName ||
+            transliterateToTamil(matchedProduct.productName || '') ||
+            '',
+        }
+
         const name =
-          matchedProduct.productName ||
-          matchedProduct.name ||
-          matchedProduct.tamilName ||
+          product.productName ||
+          product.name ||
+          product.tamilName ||
           'Unknown Product'
 
         setCart((prev) =>
-          addOrIncrementCart(
-            prev,
-            matchedProduct
-          )
+          addOrIncrementCart(prev, product)
         )
 
         speakProduct(name)
@@ -870,19 +876,15 @@ export default function NewReceipt({
                   'not-allowed' ||
                 errorCode ===
                   'service-not-allowed'
-              ) {
-                message =
-                  language === 'ta'
-                    ? 'மைக்ரோஃபோன் அனுமதி மறுக்கப்பட்டது'
-                    : 'Microphone permission denied'
-              } else if (
-                errorCode ===
-                'audio-capture'
-              ) {
-                message =
-                  language === 'ta'
-                    ? 'மைக்ரோஃபோன் கிடைக்கவில்லை'
-                    : 'No microphone available'
+) {
+                        message =
+                          t('micPermissionDenied')
+                      } else if (
+                        errorCode ===
+                        'audio-capture'
+                      ) {
+                        message =
+                          t('micUnavailable')
               }
 
               if (
@@ -972,12 +974,10 @@ export default function NewReceipt({
         ) ||
         savedItems.length === 0
       ) {
-        showToast(
-          language === 'ta'
-            ? 'முதலில் Product சேர்க்கவும்'
-            : 'Please add products first.',
-          3000
-        )
+            showToast(
+              t('addProductsFirst'),
+              3000
+            )
         return
       }
 
@@ -1052,9 +1052,7 @@ export default function NewReceipt({
               !voiceMatchedRef.current
             ) {
               showToast(
-                language === 'ta'
-                  ? 'Product புரியவில்லை. மீண்டும் சொல்லவும்.'
-                  : 'Product not recognized. Please try again.',
+                t('productNotRecognized'),
                 3000
               )
             }
@@ -1107,11 +1105,8 @@ export default function NewReceipt({
                   const transcript of
                     list
                 ) {
-                  const text =
-                    String(
-                      transcript ||
-                        ''
-                    ).trim()
+          const text =
+            String(transcript || '').trim()
 
                   if (!text) {
                     continue
@@ -1197,9 +1192,7 @@ export default function NewReceipt({
                     false
 
                   showToast(
-                    language === 'ta'
-                      ? 'Product புரியவில்லை. மீண்டும் சொல்லவும்.'
-                      : 'Product not recognized. Please try again.',
+                    t('productNotRecognized'),
                     3000
                   )
                 }
@@ -1631,8 +1624,7 @@ export default function NewReceipt({
           setIsModalOpen(false)
 
           showToast(
-            t('saveSuccess') ||
-              'ரசீது வெற்றிகரமாக சேமிக்கப்பட்டது',
+            t('saveSuccess'),
             3000
           )
         } catch (err) {

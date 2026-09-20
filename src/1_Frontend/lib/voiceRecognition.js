@@ -756,49 +756,38 @@ const createBilingualRecognition = (
   recognition.lang = language
   recognition.interimResults = false
   recognition.continuous = false
-  recognition.maxAlternatives = 5
+  recognition.maxAlternatives = 1
 
   let stopped = false
   let ended = false
+  let resultReceived = false
 
   recognition.onresult = (event) => {
-    if (stopped) return
+    if (stopped || resultReceived) return
 
-    const transcripts = []
+    let finalTranscript = ''
 
     for (
       let i = event.resultIndex;
       i < event.results.length;
       i++
     ) {
-      const result =
-        event.results[i]
+      const result = event.results[i]
+      if (!result || !result.isFinal) continue
 
-      for (
-        let j = 0;
-        j < result.length;
-        j++
-      ) {
-        const text =
-          result[j]?.transcript?.trim()
-
-        if (
-          text &&
-          !transcripts.includes(text)
-        ) {
-          transcripts.push(text)
-        }
+      const text = String(result[0]?.transcript || '').trim()
+      if (text) {
+        finalTranscript = text
+        break
       }
     }
 
-    if (
-      transcripts.length &&
-      handlers.onResult
-    ) {
-      handlers.onResult(
-        transcripts,
-        true
-      )
+    if (finalTranscript && handlers.onResult) {
+      resultReceived = true
+      try {
+        recognition.abort()
+      } catch (_) {}
+      handlers.onResult(finalTranscript, true)
     }
   }
 

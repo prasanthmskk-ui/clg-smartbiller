@@ -4,7 +4,7 @@ import { ArrowLeft, Camera, Save, ScanLine, Sparkles, X, Loader, CheckCircle, Mi
 import { useLanguage } from '../i18n'
 import { useOcr } from '../../lib/ocr/useOcr.jsx'
 import { transliterateToTamil } from '../../lib/ocr/transliterate'
-import { createBilingualRecognition, getSpeechRecognition, isTamilText, mapTamilPhonetic, TAMIL_VOICE_LANGUAGE, ENGLISH_VOICE_LANGUAGE, VOICE_INSECURE } from '../lib/voiceRecognition'
+import { createBilingualRecognition, getSpeechRecognition, isTamilText, mapTamilPhonetic, normalizeVoiceText, TAMIL_VOICE_LANGUAGE, ENGLISH_VOICE_LANGUAGE, VOICE_INSECURE } from '../lib/voiceRecognition'
 
 const BarcodeScanner = React.lazy(() => import('../components/BarcodeScanner'))
 
@@ -33,12 +33,12 @@ const COMMON_DICTIONARY = {
 }
 
 const getImmediateTamilName = (text) => {
-  const normalized = text.trim().toLowerCase().replace(/\s+/g, ' ')
+  const normalized = String(text || '').trim().toLowerCase().replace(/\s+/g, ' ')
   return COMMON_DICTIONARY[normalized] || transliterateToTamil(text)
 }
 
 const getImmediateEnglishName = (text) => {
-  const normalized = text.trim().toLowerCase().replace(/\s+/g, ' ')
+  const normalized = String(text || '').trim().toLowerCase().replace(/\s+/g, ' ')
   const match = Object.entries(COMMON_DICTIONARY).find(([, tamil]) => (
     tamil.toLowerCase().replace(/\s+/g, ' ') === normalized
   ))
@@ -121,30 +121,46 @@ export default function AddProduct(props) {
       if (code === 'not-allowed' || code === 'service-not-allowed') {
         message = t('voiceRequiresHttps')
       } else if (code === 'no-speech') {
-        message = field === 'english' ? 'No speech detected' : 'குரல் கேட்கவில்லை'
+        message = t('noSpeechDetected')
       }
       showToast(message)
     }
 
+    let finalReceived = false
+    let sessionClosed = false
+
     const session = createBilingualRecognition(SpeechRecognition, {
       onResult: (transcript, isFinal) => {
-        const tamilPhonetic = mapTamilPhonetic(transcript)
+        if (finalReceived || sessionClosed) return
+        if (!isFinal) return
+
+        const normalized = normalizeVoiceText(transcript)
+        if (!normalized) return
+
+        finalReceived = true
+        sessionClosed = true
+
         if (field === 'tamil') {
+          const tamilPhonetic = mapTamilPhonetic(transcript)
           const tamilText = tamilPhonetic || (isTamilText(transcript) ? transcript : getImmediateTamilName(transcript))
           setTamilName(tamilText)
-          if (isFinal) translateToEnglish(tamilText, 0)
+          translateToEnglish(tamilText, 0)
         } else {
           const englishText = isTamilText(transcript) ? getImmediateEnglishName(transcript) : transcript
           setProductName(englishText)
-          if (isTamilText(transcript) && isFinal) {
+          if (isTamilText(transcript)) {
             translateToEnglish(transcript, 0)
           } else {
             setTamilName(getImmediateTamilName(englishText))
-            if (isFinal) translateToTamil(englishText, 0)
+            translateToTamil(englishText, 0)
           }
         }
+
+        try { session?.abort() } catch (_) {}
+        stopListening()
       },
       onError: (event) => {
+        if (sessionClosed) return
         const code = event?.error || ''
         if (code !== 'no-speech' && code !== 'aborted' && code !== 'network') showVoiceError(code)
       },
@@ -170,7 +186,7 @@ export default function AddProduct(props) {
   const stopListening = () => {
     const recognition = recognitionRef.current
     recognitionRef.current = null
-    recognition?.stop()
+    try { recognition?.abort() } catch (_) {}
     setListeningField(null)
     setIsListening(false)
   }
@@ -197,12 +213,12 @@ export default function AddProduct(props) {
   const translateToTamil = (text, delay = 500) => {
     clearTimeout(tamilDebounceRef.current)
     const requestId = ++latestTamilRequest.current
-    if (!text.trim()) {
+    if (!text || !String(text).trim()) {
       setTamilName('')
       return
     }
 
-    const normalized = text.trim().toLowerCase()
+    const normalized = String(text).trim().toLowerCase()
     const dictMatch = COMMON_DICTIONARY[normalized]
     if (dictMatch) {
       setTamilName(dictMatch)
@@ -264,7 +280,7 @@ export default function AddProduct(props) {
   const translateToEnglish = (text, delay = 500) => {
     clearTimeout(englishDebounceRef.current)
     const requestId = ++latestEnglishRequest.current
-    if (!text.trim()) {
+    if (!text || !String(text).trim()) {
       setProductName('')
       return
     }
@@ -312,7 +328,7 @@ export default function AddProduct(props) {
     setProductName(value)
     clearTimeout(englishDebounceRef.current)
     latestEnglishRequest.current++
-    if (!value.trim()) {
+    if (!value || !String(value).trim()) {
       setTamilName('')
     } else {
       setTamilName(getImmediateTamilName(value))
@@ -327,7 +343,7 @@ export default function AddProduct(props) {
     latestTamilRequest.current++
     clearTimeout(englishDebounceRef.current)
     latestEnglishRequest.current++
-    if (!value.trim()) {
+    if (!value || !String(value).trim()) {
       setProductName('')
     } else {
       const englishName = getImmediateEnglishName(value)
@@ -393,7 +409,7 @@ export default function AddProduct(props) {
   }
 
   const saveProduct = () => {
-    const trimmedName = productName.trim()
+    const trimmedName = String(productName || '').trim()
     const trimmedPrice = String(price ?? '').trim()
     const numericPrice = Number(trimmedPrice)
 
@@ -401,7 +417,7 @@ export default function AddProduct(props) {
       return
     }
 
-    const trimmedBarcode = barcode.trim()
+    const trimmedBarcode = String(barcode || '').trim()
     const currentId = editingProduct?.id
     const existingProducts = props.existingProducts || []
     if (trimmedBarcode && existingProducts.some((p) => p.barcode === trimmedBarcode && p.id !== currentId)) {
@@ -412,7 +428,7 @@ export default function AddProduct(props) {
     const savedItem = {
       id: currentId || Date.now().toString(36) + Math.random().toString(36).substr(2, 9),
       productName: trimmedName,
-      tamilName: tamilName.trim(),
+      tamilName: String(tamilName || '').trim(),
       price: numericPrice,
       barcode: trimmedBarcode,
     }
